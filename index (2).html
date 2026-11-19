@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proje Tanıtım - Yükleniyor...</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #07080a;
+            color: #66fcf1;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            padding: 20px;
+            transition: background-color 0.2s;
+        }
+
+        body.danger-mode {
+            animation: screenJitter 0.15s infinite;
+        }
+
+        /* 1. EKRAN: YÜKLEME VE LOGLAR */
+        #loading-box {
+            width: 100%;
+            max-width: 650px;
+            background: #141920;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 25px rgba(102, 252, 241, 0.15);
+            border: 1px solid #45a29e;
+            position: relative;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .bar-bg {
+            width: 100%;
+            height: 22px;
+            background-color: #07080a;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 1px solid #45a29e;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #45a29e, #66fcf1);
+            transition: width 0.4s ease-in-out;
+        }
+
+        #log-area {
+            background-color: #050608;
+            padding: 15px;
+            border-radius: 4px;
+            height: 230px;
+            overflow-y: auto;
+            font-size: 0.92rem;
+            line-height: 1.65;
+            border: 1px solid #222;
+        }
+
+        .log-danger {
+            color: #ff1e1e;
+            font-weight: bold;
+            text-shadow: 0 0 6px rgba(255, 30, 30, 0.7);
+        }
+
+        /* 2. EKRAN: AĞIR SİBER İHLAL EKRANI */
+        #hacked-box {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: #030000;
+            color: #ff1e1e;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            z-index: 9998;
+            animation: pulseBg 0.6s infinite alternate;
+        }
+
+        /* Eski CRT monitör / güvenlik kamerası tarama çizgileri */
+        #hacked-box::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.35) 0px,
+                rgba(0, 0, 0, 0.35) 2px,
+                transparent 2px,
+                transparent 4px
+            );
+            pointer-events: none;
+        }
+
+        .alert-frame {
+            border: 3px solid #ff1e1e;
+            background-color: rgba(25, 0, 0, 0.92);
+            padding: 30px;
+            max-width: 720px;
+            width: 100%;
+            box-shadow: 0 0 60px rgba(255, 0, 0, 0.75);
+            position: relative;
+        }
+
+        .alert-frame h1 {
+            font-size: clamp(1.6rem, 4vw, 2.5rem);
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+            animation: glitchText 0.3s infinite;
+        }
+
+        .stolen-details {
+            text-align: left;
+            background: #000;
+            border: 1px solid #ff1e1e;
+            padding: 16px;
+            margin: 18px 0;
+            font-size: 0.88rem;
+            color: #ff7b7b;
+            line-height: 1.75;
+        }
+
+        .stolen-details span {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        .live-upload {
+            background: #1a0000;
+            border: 1px dashed #ff1e1e;
+            padding: 10px;
+            font-size: 0.85rem;
+            color: #ffcccc;
+            margin-bottom: 14px;
+        }
+
+        /* 3. AŞAMA: ÜSTTEN İNEN TARAYICI BİLDİRİMİ */
+        #browser-notif {
+            position: fixed;
+            top: -220px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 92%;
+            max-width: 440px;
+            background-color: #202124;
+            color: #e8eaed;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            border-radius: 12px;
+            padding: 16px 18px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85);
+            border: 1px solid #3c4043;
+            z-index: 10000;
+            transition: top 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        #browser-notif.show {
+            top: 18px;
+        }
+
+        .notif-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: #9aa0a6;
+            margin-bottom: 8px;
+        }
+
+        .notif-site {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .notif-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #8ab4f8;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .notif-body {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 14px;
+            line-height: 1.4;
+        }
+
+        .notif-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .notif-btn {
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #5f6368;
+            background: transparent;
+            color: #8ab4f8;
+        }
+
+        .notif-btn.primary {
+            background: #8ab4f8;
+            color: #202124;
+            border-color: #8ab4f8;
+            font-weight: 600;
+        }
+
+        @keyframes pulseBg {
+            from { background-color: #030000; }
+            to { background-color: #2b0000; }
+        }
+
+        @keyframes screenJitter {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-2px, 1px); }
+            50% { transform: translate(2px, -1px); }
+            75% { transform: translate(-1px, -2px); }
+            100% { transform: translate(1px, 2px); }
+        }
+
+        @keyframes glitchText {
+            0% { text-shadow: 2px 0 #00ffff, -2px 0 #ff0000; }
+            50% { text-shadow: -2px 0 #00ffff, 2px 0 #ff0000; }
+            100% { text-shadow: 2px 0 #00ffff, -2px 0 #ff0000; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. AŞAMA -->
+    <div id="loading-box">
+        <h2 id="main-title">Proje Tanıtım Sayfası Yükleniyor...</h2>
+        <div class="bar-bg">
+            <div id="progress-bar"></div>
+        </div>
+        <div id="log-area"></div>
+    </div>
+
+    <!-- 2. AŞAMA: KORKUTUCU VERİ İHLALİ EKRANI -->
+    <div id="hacked-box">
+        <div class="alert-frame">
+            <h1>☠ ROOT ERİŞİMİ SAĞLANDI ☠</h1>
+            <p style="color:#fff;">Cihazınız uzaktan kontrol altına alındı. Arka planda tüm kimlik doğrulama anahtarları ve yerel dizinler kopyalanıyor.</p>
+            
+            <div class="stolen-details" id="device-info"></div>
+
+            <div class="live-upload" id="upload-status">
+                Paket Gönderiliyor: 185.220.101.44:443 -> [██████████░░] 84% (142.8 MB)
+            </div>
+
+            <p style="font-weight: bold; color: #ff1e1e; letter-spacing: 1px;">SAYFAYI KAPATSANIZ BİLE İŞLEM ARKA PLANDA DEVAM EDECEKTİR!</p>
+        </div>
+    </div>
+
+    <!-- 3. AŞAMA: ÜSTTEN İNEN TARAYICI BİLDİRİMİ -->
+    <div id="browser-notif">
+        <div class="notif-header">
+            <div class="notif-site">
+                <span class="notif-dot"></span>
+                <span>proje-tanitim.app • Şimdi</span>
+            </div>
+            <span style="cursor:pointer;" onclick="document.getElementById('browser-notif').classList.remove('show')">✕</span>
+        </div>
+        <div class="notif-body">
+            korktun mu hjkdhfjkhfjkd
+        </div>
+        <div class="notif-actions">
+            <button class="notif-btn" onclick="document.getElementById('browser-notif').classList.remove('show')">Engelle</button>
+            <button class="notif-btn primary" onclick="document.getElementById('browser-notif').classList.remove('show')">İzin Ver</button>
+        </div>
+    </div>
+
+    <script>
+        const mesajlar = [
+            { text: "> Sunucuya bağlanılıyor...", danger: false },
+            { text: "> Proje dosyaları ve arayüz bileşenleri çekiliyor...", danger: false },
+            { text: "> KRİTİK HATA: Ters kabuk (Reverse Shell) tetiklendi!", danger: true },
+            { text: "> Tarayıcı Sandbox koruması aşıldı. Root izni alındı...", danger: true },
+            { text: "> C:/Users/ ve ~/.ssh/id_rsa dizinleri okunuyor...", danger: true },
+            { text: "> Chrome kayıtlı şifreler veritabanı (Login Data) çözüldü...", danger: true },
+            { text: "> Aktif oturum tokenları ve GitHub anahtarları paketleniyor...", danger: true },
+            { text: "> Kameraya ve yerel ağa erişim izni doğrulandı (%100).", danger: true }
+        ];
+
+        const logArea = document.getElementById("log-area");
+        const progressBar = document.getElementById("progress-bar");
+        const mainTitle = document.getElementById("main-title");
+        const loadingBox = document.getElementById("loading-box");
+        const hackedBox = document.getElementById("hacked-box");
+        const deviceInfo = document.getElementById("device-info");
+        const browserNotif = document.getElementById("browser-notif");
+
+        let audioCtx = null;
+
+        function sesMotorunuHazirla() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    audioCtx = new AudioContextClass();
+                }
+            }
+            if (audioCtx && audioCtx.state === "suspended") {
+                audioCtx.resume();
+            }
+        }
+
+        document.addEventListener("click", sesMotorunuHazirla, { once: true });
+        document.addEventListener("keydown", sesMotorunuHazirla, { once: true });
+
+        // Gerilim yaratan kısa uyarı sesi
+        function tehlikeSesiCal() {
+            try {
+                sesMotorunuHazirla();
+                if (!audioCtx) return;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = "sawtooth";
+                osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(95, audioCtx.currentTime + 0.35);
+
+                gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.22, audioCtx.currentTime + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.36);
+            } catch (err) {}
+        }
+
+        // En sondaki masum bildirim sesi
+        function bildirimSesiCal() {
+            try {
+                sesMotorunuHazirla();
+                if (!audioCtx) return;
+
+                const notalar = [
+                    { freq: 880, delay: 0, dur: 0.14 },
+                    { freq: 1174.66, delay: 0.15, dur: 0.25 }
+                ];
+
+                notalar.forEach((n) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = "sine";
+                    osc.frequency.setValueAtTime(n.freq, audioCtx.currentTime + n.delay);
+
+                    gain.gain.setValueAtTime(0.001, audioCtx.currentTime + n.delay);
+                    gain.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + n.delay + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + n.delay + n.dur);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(audioCtx.currentTime + n.delay);
+                    osc.stop(audioCtx.currentTime + n.delay + n.dur + 0.02);
+                });
+            } catch (err) {}
+        }
+
+        // Gerçek ekran kartı (GPU) bilgisini çekme
+        function gpuBilgisiAl() {
+            try {
+                const canvas = document.createElement("canvas");
+                const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+                if (!gl) return "Entegre Grafik Birimi";
+                const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+                return debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : "Standart GPU";
+            } catch (e) {
+                return "Standart GPU";
+            }
+        }
+
+        function cihazBilgisiHazirla() {
+            const platform = navigator.platform || "Bilinmeyen Sistem";
+            const cozunurluk = `${window.screen.width}x${window.screen.height}`;
+            const cekirdek = navigator.hardwareConcurrency || "8";
+            const gpu = gpuBilgisiAl();
+            const saatDilimi = Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Istanbul";
+
+            deviceInfo.innerHTML = `
+                > Hedef Donanım: <span>${platform} | ${cekirdek} Mantıksal Çekirdek</span><br>
+                > Grafik İşlemci (GPU): <span>${gpu}</span><br>
+                > Ekran & Bölge: <span>${cozunurluk} (${saatDilimi})</span><br>
+                > Ele Geçirilenler: <span>SSH Keys, Browser Cookies, Saved Passwords</span><br>
+                > Uzak Sunucu Durumu: <span style="color:#ff1e1e;">BAĞLI & VERİ ÇEKİLİYOR ●</span>
+            `;
+        }
+
+        let adim = 0;
+
+        const interval = setInterval(() => {
+            if (adim < mesajlar.length) {
+                const p = document.createElement("p");
+                p.textContent = mesajlar[adim].text;
+                
+                if (mesajlar[adim].danger) {
+                    p.classList.add("log-danger");
+                    mainTitle.textContent = "⚠ YETKİSİZ ERİŞİM İHLALİ ⚠";
+                    mainTitle.style.color = "#ff1e1e";
+                    progressBar.style.background = "#ff1e1e";
+                    document.body.classList.add("danger-mode");
+                    tehlikeSesiCal();
+                }
+
+                logArea.appendChild(p);
+                logArea.scrollTop = logArea.scrollHeight;
+
+                const yuzde = ((adim + 1) / mesajlar.length) * 100;
+                progressBar.style.width = yuzde + "%";
+
+                adim++;
+            } else {
+                clearInterval(interval);
+                cihazBilgisiHazirla();
+
+                setTimeout(() => {
+                    document.body.classList.remove("danger-mode");
+                    loadingBox.style.display = "none";
+                    hackedBox.style.display = "flex";
+                    tehlikeSesiCal();
+
+                    // 3.5 saniye boyunca o korkunç ekranda terletsin, sonra tepeden bildirimi indirsin
+                    setTimeout(() => {
+                        browserNotif.classList.add("show");
+                        bildirimSesiCal();
+                    }, 3500);
+
+                }, 700);
+            }
+        }, 750);
+    </script>
+
+</body>
+</html>
